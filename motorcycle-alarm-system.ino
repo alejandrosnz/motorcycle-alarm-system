@@ -9,30 +9,32 @@ State state_alarm(NULL, &on_state_alarm, NULL);
 
 // State DISABLED
 void on_state_disabled(){
-  
+  log("State DISABLED");
 }
 
 // Pre-State ARMED
 void on_state_armed_enter(){
-  
+  log("Pre-State ARMED");
 }
 
 // State ARMED
 void on_state_armed(){
-  
+ log("State ARMED"); 
 }
 
 // State WARN
 void on_state_warn(){
-  
+  log("State WARN");
 }
 
 // State ALARM
 void on_state_alarm(){
-  
+  log("State ALARM");
 }
 
 void setup() {
+  Serial.begin(9600);
+  
   // Setup initial state
   Fsm fsm(&state_disabled);
 
