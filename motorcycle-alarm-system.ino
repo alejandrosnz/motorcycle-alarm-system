@@ -33,8 +33,29 @@ void on_state_alarm(){
 }
 
 void setup() {
-  // put your setup code here, to run once:
+  // Setup initial state
+  Fsm fsm(&state_disabled);
 
+  // Transations
+  // Activate Alarm
+  fsm.add_transition(&state_disabled, &state_armed,
+                     NULL, NULL);
+  // Deactivate Alarm
+  fsm.add_transition(&state_armed, &state_disabled,
+                     NULL, NULL);
+  // Alert
+  fsm.add_transition(&state_armed, &state_warn,
+                     NULL, NULL);
+  // Quiet
+  fsm.add_transition(&state_warn, &state_armed,
+                     NULL, NULL);
+  fsm.add_transition(&state_alarm, &state_armed,
+                     NULL, NULL);
+  // Alarm
+  fsm.add_transition(&state_armed, &state_alarm,
+                     NULL, NULL);
+  fsm.add_transition(&state_warn, &state_alarm,
+                     NULL, NULL);
 }
 
 void loop() {
