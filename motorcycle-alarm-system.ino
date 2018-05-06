@@ -1,12 +1,12 @@
 #include "Fsm.h"
 
 // I/O
-const int ARMED_SWITCH  = 2;
-const int ARMED_LED     = 4;
-const int BUZZER        = 3;
-const int SIREN         = 8;
-const int BLINKERS      = 12;
-const int ACCMETER_I2C  = 0x68;
+const int ARMED_SWITCH      = 2;
+const int ARMED_LED         = 4;
+const int BUZZER            = 3;
+const int SIREN             = 8;
+const int BLINKERS          = 12;
+const int ACCMETER_I2C      = 0x68;
 
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
@@ -16,14 +16,12 @@ State state_warn(NULL, &on_state_warn, NULL);
 State state_alarm(NULL, &on_state_alarm, NULL);
 
 // Events
-enum{
-  EVENT_ACTIVATE,
-  EVENT_DEACTIVATE,
-  EVENT_ARM,
-  EVENT_ALERT,
-  EVENT_QUIET,
-  EVENT_ALARM
-}
+const int EVENT_ACTIVATE    = 0xf0;
+const int EVENT_DEACTIVATE  = 0xf1;
+const int EVENT_ARM         = 0xf2;
+const int EVENT_ALERT       = 0xf3;
+const int EVENT_ALARM       = 0xf4;
+const int EVENT_QUIET       = 0xf5;
 
 // Setup initial state
 Fsm fsm(&state_disabled);
@@ -34,8 +32,10 @@ const int DELAY_PREARMED = 5;
 // State DISABLED
 void on_state_disabled(){
   log("State DISABLED");
+  while(true){
 
-  while(true){  
+    digitalWrite(13, digitalRead(ARMED_SWITCH));
+    
     if(digitalRead(ARMED_SWITCH) == LOW){
       fsm.trigger(EVENT_ACTIVATE);
       
@@ -50,9 +50,6 @@ void on_state_prearmed(){
 
   // BUZZ
 
-  delay(DELAY_PREARMED * 1000);
-
-  fsm.trigger(EVENT_ARM);
 }
 
 // State ARMED
@@ -81,13 +78,22 @@ void on_state_alarm(){
 void setup() {
   Serial.begin(9600);
 
+  // I/O
+  pinMode(ARMED_SWITCH, INPUT);
+  pinMode(ARMED_LED, OUTPUT);
+  pinMode(BUZZER, OUTPUT);
+  pinMode(SIREN, OUTPUT);
+  pinMode(BLINKERS, OUTPUT);
+
   // Transations
   // Activate Alarm
   fsm.add_transition(&state_disabled, &state_prearmed,
                      EVENT_ACTIVATE, NULL);
   // Arm Alarm
-  fsm.add_transition(&state_prearmed, &state_armed,
-                     EVENT_ACTIVATE, NULL);
+  //fsm.add_transition(&state_prearmed, &state_armed,
+  //                   EVENT_ARM, NULL);
+  fsm.add_timed_transition(&state_prearmed, &state_armed, 
+                     DELAY_PREARMED * 1000, NULL);
   // Deactivate Alarm
   fsm.add_transition(&state_prearmed, &state_disabled,
                      EVENT_DEACTIVATE, NULL);
