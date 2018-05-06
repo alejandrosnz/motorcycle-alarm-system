@@ -1,11 +1,18 @@
 #include "Fsm.h"
 
-
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
 State state_armed(&on_state_armed_enter, &on_state_armed, NULL);
 State state_warn(NULL, &on_state_warn, NULL);
 State state_alarm(NULL, &on_state_alarm, NULL);
+
+// I/O
+const int ARMED_SWITCH  = 2;
+const int ARMED_LED     = 4;
+const int BUZZER        = 3;
+const int SIREN         = 8;
+const int BLINKERS      = 12;
+const int ACCMETER_I2C  = 0x68;
 
 // State DISABLED
 void on_state_disabled(){
@@ -57,7 +64,7 @@ void setup() {
   fsm.add_transition(&state_armed, &state_alarm,
                      NULL, NULL);
   fsm.add_transition(&state_warn, &state_alarm,
-                     NULL, NULL);
+                     NULL, NULL);                   
 }
 
 void loop() {
