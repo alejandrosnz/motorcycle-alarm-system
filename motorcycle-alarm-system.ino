@@ -6,7 +6,7 @@ const int ARMED_LED         = 4;
 const int BUZZER            = 3;
 const int SIREN             = 8;
 const int BLINKERS          = 12;
-const int ACCMETER_I2C      = 0x68;
+const int ACCELEROMETER_I2C = 0x68;
 
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
