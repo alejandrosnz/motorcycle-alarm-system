@@ -8,6 +8,12 @@ const int SIREN             = 8;
 const int BLINKERS          = 12;
 const int ACCELEROMETER_I2C = 0x68;
 
+// Configuration
+const bool REV_ARMED_SWITCH = true;
+const int DELAY_PREARMED    = 5;
+const int DELAY_POSTWARN    = 5;
+const int TIME_ALARMED      = 5;
+
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
 State state_prearmed(NULL, &on_state_prearmed, NULL);
@@ -26,19 +32,13 @@ const int EVENT_QUIET       = 0xf5;
 // Setup initial state
 Fsm fsm(&state_disabled);
 
-// Constants
-const int DELAY_PREARMED = 5;
-const int DELAY_POSTWARN = 5;
-const int TIME_ALARMED   = 5;
 
 // State DISABLED
 void on_state_disabled(){
   log("State DISABLED");
   while(true){
-
-    digitalWrite(13, digitalRead(ARMED_SWITCH));
     
-    if(digitalRead(ARMED_SWITCH) == LOW){
+    if(isArmed()){
       fsm.trigger(EVENT_ACTIVATE);
       
       break;
@@ -59,7 +59,7 @@ void on_state_armed(){
  log("State ARMED");
 
   while (true){
-    if (digitalRead(ARMED_SWITCH) == HIGH){
+    if (!isArmed()){
       fsm.trigger(EVENT_DEACTIVATE);
 
       break;
@@ -96,7 +96,7 @@ void on_state_alarm(){
   log("State ALARM");
 
   while (true){
-    if (digitalRead(ARMED_SWITCH) == HIGH){
+    if (!isArmed()){
       fsm.trigger(EVENT_QUIET);
 
       break;
@@ -159,4 +159,8 @@ void loop() {
 
 void log(String msg){
   Serial.println(msg);
+}
+
+bool isArmed(){
+  return digitalWrite(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
 }
