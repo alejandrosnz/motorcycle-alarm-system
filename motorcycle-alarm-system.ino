@@ -28,6 +28,8 @@ Fsm fsm(&state_disabled);
 
 // Constants
 const int DELAY_PREARMED = 5;
+const int DELAY_POSTWARN = 5;
+const int TIME_ALARMED   = 5;
 
 // State DISABLED
 void on_state_disabled(){
@@ -62,17 +64,48 @@ void on_state_armed(){
 
       break;
     }
+
+    // Read accelerometer
+
+    // IF accelerometer read moves softly
+    fsm.trigger(EVENT_WARN);
+
+    // IF accelerometer read moves hardly
+    fsm.trigger(EVENT_ALARM);
   }
 }
 
 // State WARN
 void on_state_warn(){
   log("State WARN");
+
+  // BLINKERS
+
+  // SHORT SIREN
+
+  while(true){
+    // Read accelerometer
+    
+    // IF accelerometer read moves
+    fsm.trigger(EVENT_ALARM);
+  }
 }
 
 // State ALARM
 void on_state_alarm(){
   log("State ALARM");
+
+  while (true){
+    if (digitalRead(ARMED_SWITCH) == HIGH){
+      fsm.trigger(EVENT_QUIET);
+
+      break;
+    }
+    
+    // BLINKERS
+
+    // SIREN
+  }
 }
 
 void setup() {
@@ -90,8 +123,6 @@ void setup() {
   fsm.add_transition(&state_disabled, &state_prearmed,
                      EVENT_ACTIVATE, NULL);
   // Arm Alarm
-  //fsm.add_transition(&state_prearmed, &state_armed,
-  //                   EVENT_ARM, NULL);
   fsm.add_timed_transition(&state_prearmed, &state_armed, 
                      DELAY_PREARMED * 1000, NULL);
   // Deactivate Alarm
@@ -110,16 +141,20 @@ void setup() {
   // Quiet
   fsm.add_transition(&state_warn, &state_armed,
                      EVENT_QUIET, NULL);
+  fsm.add_timed_transition(&state_warn, &state_armed,
+                     DELAY_POSTWARN * 1000, NULL);
   fsm.add_transition(&state_alarm, &state_armed,
                      EVENT_QUIET, NULL);
+  fsm.add_timed_transition(&state_alarm, &state_warn,
+                     TIME_ALARMED * 1000, NULL);
 
   // Start state machine
   fsm.run_machine();
 }
 
 void loop() { 
-  // put your main code here, to run repeatedly: 
-  
+  // Empty
+
 }
 
 void log(String msg){
