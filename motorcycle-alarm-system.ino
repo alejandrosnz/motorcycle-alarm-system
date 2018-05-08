@@ -63,9 +63,9 @@ void on_state_prearmed(){
     currentMillis = millis();
 
     if (!isArmed()){
-      fsm.trigger(EVENT_DEACTIVATE);
-
       digitalWrite(BLINKERS, LOW);
+      
+      fsm.trigger(EVENT_DEACTIVATE);
       break;
     }
 
