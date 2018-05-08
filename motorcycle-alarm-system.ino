@@ -50,8 +50,35 @@ void on_state_disabled(){
 void on_state_prearmed(){
   log("State PRE-ARMED");
 
-  // BUZZ
+  // BLINKERS
+  int blinkersState = LOW;
+  unsigned long blinkersPreviousMillis = 0;
+  int blinkersOnTime = 500;
+  int blinkersOffTime = 500;
+  int totalTime = 3 * 1000;
+  unsigned long currentMillis = millis();
+  unsigned long startTime = currentMillis;
 
+  while(currentMillis < (startTime + totalTime)){
+    currentMillis = millis();
+
+    if (!isArmed()){
+      fsm.trigger(EVENT_DEACTIVATE);
+
+      digitalWrite(BLINKERS, LOW);
+      break;
+    }
+
+    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+      blinkersState = LOW;
+      digitalWrite(BLINKERS, LOW);
+      blinkersPreviousMillis = currentMillis;
+    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+      blinkersState = HIGH;
+      digitalWrite(BLINKERS, HIGH);
+      blinkersPreviousMillis = currentMillis;
+    }
+  }
 }
 
 // State ARMED
