@@ -10,9 +10,10 @@ const int ACCELEROMETER_I2C = 0x68;
 
 // Configuration
 const bool REV_ARMED_SWITCH = true;
-const int DELAY_PREARMED    = 5;
-const int DELAY_POSTWARN    = 5;
-const int TIME_ALARMED      = 5;
+const int DELAY_PREARMED    = 5 * 1000;
+const int TIME_NOTIFY       = 600;
+const int TIME_WARNED       = 2 * 1000;
+const int TIME_ALARMED      = 30 * 1000;
 
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
@@ -53,11 +54,10 @@ void on_state_prearmed(){
   // BLINKERS
   int blinkersState = LOW;
   unsigned long blinkersPreviousMillis = 0;
-  int blinkersOnTime = 200;
-  int blinkersOffTime = 200;
-  int totalTime = 1 * 1000;
-  unsigned long currentMillis = millis();
-  unsigned long startTime = currentMillis;
+  int blinkersOnTime = 100;
+  int blinkersOffTime = 100;
+  unsigned long currentMillis;
+  unsigned long startTime = millis();
 
   while(true){
     currentMillis = millis();
@@ -69,7 +69,7 @@ void on_state_prearmed(){
       break;
     }
 
-    if(currentMillis >= startTime + totalTime){
+    if(currentMillis >= startTime + TIME_NOTIFY){
       digitalWrite(BLINKERS, LOW);
       break;
     }
@@ -82,6 +82,22 @@ void on_state_prearmed(){
       blinkersState = HIGH;
       digitalWrite(BLINKERS, HIGH);
       blinkersPreviousMillis = currentMillis;
+    }
+  }
+
+  startTime = millis();
+
+  while(true){
+    currentMillis = millis();
+
+    if (!isArmed()){
+      fsm.trigger(EVENT_DEACTIVATE);
+      break;
+    }
+
+    if(currentMillis >= startTime + DELAY_PREARMED){
+      digitalWrite(BLINKERS, LOW);
+      break;
     }
   }
 }
@@ -111,9 +127,54 @@ void on_state_armed(){
 void on_state_warn(){
   log("State WARN");
 
-  // BLINKERS
+  // BLINKERS & SHORT SIREN
+  int blinkersState = LOW;
+  unsigned long blinkersPreviousMillis = 0;
+  int blinkersOnTime = 200;
+  int blinkersOffTime = 200;
+  int sirenState = LOW;
+  unsigned long sirenPreviousMillis = 0;
+  int sirenOnTime = 500;
+  int sirenOffTime = 300;
+  unsigned long currentMillis;
+  unsigned long startTime = millis();
 
-  // SHORT SIREN
+  while(true){
+    currentMillis = millis();
+
+    if (!isArmed()){
+      digitalWrite(BLINKERS, LOW);
+      
+      fsm.trigger(EVENT_DEACTIVATE);
+      break;
+    }
+
+    if(currentMillis >= startTime + TIME_WARNED){
+      digitalWrite(BLINKERS, LOW);
+      digitalWrite(SIREN, LOW);
+      break;
+    }
+
+    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+      blinkersState = LOW;
+      digitalWrite(BLINKERS, LOW);
+      blinkersPreviousMillis = currentMillis;
+    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+      blinkersState = HIGH;
+      digitalWrite(BLINKERS, HIGH);
+      blinkersPreviousMillis = currentMillis;
+    }
+
+    if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
+      sirenState = LOW;
+      digitalWrite(SIREN, LOW);
+      sirenPreviousMillis = currentMillis;
+    }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
+      sirenState = HIGH;
+      digitalWrite(SIREN, HIGH);
+      sirenPreviousMillis = currentMillis;
+    }
+  }
 
   while(true){
     // Read accelerometer
@@ -127,17 +188,56 @@ void on_state_warn(){
 void on_state_alarm(){
   log("State ALARM");
 
-  while (true){
-    if (!isArmed()){
-      fsm.trigger(EVENT_QUIET);
+  // BLINKERS & LONG SIREN
+  int blinkersState = LOW;
+  unsigned long blinkersPreviousMillis = 0;
+  int blinkersOnTime = 200;
+  int blinkersOffTime = 200;
+  int sirenState = LOW;
+  unsigned long sirenPreviousMillis = 0;
+  int sirenOnTime = 500;
+  int sirenOffTime = 300;
+  unsigned long currentMillis;
+  unsigned long startTime = millis();
 
+  while(true){
+    currentMillis = millis();
+
+    if (!isArmed()){
+      digitalWrite(BLINKERS, LOW);
+      
+      fsm.trigger(EVENT_DEACTIVATE);
       break;
     }
-    
-    // BLINKERS
 
-    // SIREN
+    if(currentMillis >= startTime + TIME_ALARMED){
+      digitalWrite(BLINKERS, LOW);
+      digitalWrite(SIREN, LOW);
+      break;
+    }
+
+    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+      blinkersState = LOW;
+      digitalWrite(BLINKERS, LOW);
+      blinkersPreviousMillis = currentMillis;
+    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+      blinkersState = HIGH;
+      digitalWrite(BLINKERS, HIGH);
+      blinkersPreviousMillis = currentMillis;
+    }
+
+    if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
+      sirenState = LOW;
+      digitalWrite(SIREN, LOW);
+      sirenPreviousMillis = currentMillis;
+    }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
+      sirenState = HIGH;
+      digitalWrite(SIREN, HIGH);
+      sirenPreviousMillis = currentMillis;
+    }
   }
+
+  fsm.trigger(EVENT_QUIET);
 }
 
 void setup() {
@@ -173,12 +273,8 @@ void setup() {
   // Quiet
   fsm.add_transition(&state_warn, &state_armed,
                      EVENT_QUIET, NULL);
-  fsm.add_timed_transition(&state_warn, &state_armed,
-                     DELAY_POSTWARN * 1000, NULL);
   fsm.add_transition(&state_alarm, &state_armed,
                      EVENT_QUIET, NULL);
-  fsm.add_timed_transition(&state_alarm, &state_warn,
-                     TIME_ALARMED * 1000, NULL);
 
   // Start state machine
   fsm.run_machine();
@@ -194,5 +290,5 @@ void log(String msg){
 }
 
 bool isArmed(){
-  return digitalWrite(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
+  return digitalRead(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
 }
