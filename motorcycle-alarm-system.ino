@@ -53,19 +53,24 @@ void on_state_prearmed(){
   // BLINKERS
   int blinkersState = LOW;
   unsigned long blinkersPreviousMillis = 0;
-  int blinkersOnTime = 500;
-  int blinkersOffTime = 500;
-  int totalTime = 3 * 1000;
+  int blinkersOnTime = 200;
+  int blinkersOffTime = 200;
+  int totalTime = 1 * 1000;
   unsigned long currentMillis = millis();
   unsigned long startTime = currentMillis;
 
-  while(currentMillis < (startTime + totalTime)){
+  while(true){
     currentMillis = millis();
 
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
       
       fsm.trigger(EVENT_DEACTIVATE);
+      break;
+    }
+
+    if(currentMillis >= startTime + totalTime){
+      digitalWrite(BLINKERS, LOW);
       break;
     }
 
