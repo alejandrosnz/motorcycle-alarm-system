@@ -10,11 +10,11 @@ const int ACCELEROMETER_I2C = 0x68;
 
 // Configuration
 const bool REV_ARMED_SWITCH = true;
-const int DELAY_PREARMED    = 5 * 1000;
-const int DELAY_POSTWARN    = 120 * 1000;
-const int TIME_NOTIFY       = 600;
-const int TIME_WARNED       = 2 * 1000;
-const int TIME_ALARMED      = 30 * 1000;
+const long DELAY_PREARMED   = 5 * 1000;
+const long DELAY_POSTWARN   = 120 * 1000;
+const long TIME_NOTIFY      = 600;
+const long TIME_WARNED      = 2 * 1000;
+const long TIME_ALARMED     = 30 * 1000;
 
 // States
 State state_disabled(NULL, &on_state_disabled, NULL);
