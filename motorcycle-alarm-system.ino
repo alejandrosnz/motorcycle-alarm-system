@@ -11,6 +11,7 @@ const int ACCELEROMETER_I2C = 0x68;
 // Configuration
 const bool REV_ARMED_SWITCH = true;
 const int DELAY_PREARMED    = 5 * 1000;
+const int DELAY_POSTWARN    = 120 * 1000;
 const int TIME_NOTIFY       = 600;
 const int TIME_WARNED       = 2 * 1000;
 const int TIME_ALARMED      = 30 * 1000;
@@ -96,10 +97,11 @@ void on_state_prearmed(){
     }
 
     if(currentMillis >= startTime + DELAY_PREARMED){
-      digitalWrite(BLINKERS, LOW);
       break;
     }
   }
+
+  fsm.trigger(EVENT_ARM);
 }
 
 // State ARMED
@@ -145,7 +147,7 @@ void on_state_warn(){
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
       
-      fsm.trigger(EVENT_DEACTIVATE);
+      fsm.trigger(EVENT_QUIET);
       break;
     }
 
@@ -176,12 +178,26 @@ void on_state_warn(){
     }
   }
 
+  startTime = millis();
+
   while(true){
+    currentMillis = millis();
+
+    if (!isArmed()){
+      fsm.trigger(EVENT_QUIET);
+      break;
+    }
+
+    if (currentMillis >= startTime + DELAY_POSTWARN){
+      break;
+    }
+
     // Read accelerometer
-    
     // IF accelerometer read moves
     fsm.trigger(EVENT_ALARM);
   }
+
+  fsm.trigger(EVENT_QUIET);
 }
 
 // State ALARM
@@ -255,8 +271,8 @@ void setup() {
   fsm.add_transition(&state_disabled, &state_prearmed,
                      EVENT_ACTIVATE, NULL);
   // Arm Alarm
-  fsm.add_timed_transition(&state_prearmed, &state_armed, 
-                     DELAY_PREARMED * 1000, NULL);
+  fsm.add_transition(&state_prearmed, &state_armed, 
+                     EVENT_ARM, NULL);
   // Deactivate Alarm
   fsm.add_transition(&state_prearmed, &state_disabled,
                      EVENT_DEACTIVATE, NULL);
