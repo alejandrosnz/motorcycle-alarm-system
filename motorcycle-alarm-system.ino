@@ -95,7 +95,7 @@ void on_state_armed(){
     // Read accelerometer
 
     // IF accelerometer read moves softly
-    fsm.trigger(EVENT_WARN);
+    fsm.trigger(EVENT_ALERT);
 
     // IF accelerometer read moves hardly
     fsm.trigger(EVENT_ALARM);
