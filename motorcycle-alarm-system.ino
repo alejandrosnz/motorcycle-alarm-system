@@ -63,8 +63,10 @@ void on_state_prearmed(){
 
   while(true){
     currentMillis = millis();
-
+    
     if (!isArmed()){
+      log("on PRE-ARMED -> deactivate");
+      
       digitalWrite(BLINKERS, LOW);
       
       fsm.trigger(EVENT_DEACTIVATE);
@@ -72,6 +74,8 @@ void on_state_prearmed(){
     }
 
     if(currentMillis >= startTime + TIME_NOTIFY){
+      log("on PRE-ARMED -> end notify");
+
       digitalWrite(BLINKERS, LOW);
       break;
     }
@@ -93,15 +97,20 @@ void on_state_prearmed(){
     currentMillis = millis();
 
     if (!isArmed()){
+      log("on PRE-ARMED -> deactivate");
+      
       fsm.trigger(EVENT_DEACTIVATE);
       break;
     }
 
     if(currentMillis >= startTime + DELAY_PREARMED){
+      log("on PRE-ARMED -> end delay prearmed");
+      
       break;
     }
   }
 
+  log("on PRE-ARMED -> end pre-armed");
   fsm.trigger(EVENT_ARM);
 }
 
@@ -119,7 +128,7 @@ void on_state_armed(){
 
   while (true){
     currentMillis = millis();
-    
+
     if (!isArmed()){
       digitalWrite(ARMED_LED, LOW);
 
