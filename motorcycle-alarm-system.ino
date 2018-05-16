@@ -322,9 +322,9 @@ void loop() {
   
 }
 
-void trigger(int state){
+void trigger(int event){
   
-  switch (state){
+  switch (event){
     case EVENT_ACTIVATE:
       log("EVENT_ACTIVATE");
       if(currentState == STATE_DISABLED){
