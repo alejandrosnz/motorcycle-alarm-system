@@ -38,6 +38,7 @@ Fsm fsm(&state_disabled);
 // State DISABLED
 void on_state_disabled(){
   log("State DISABLED");
+  
   while(true){
     
     if(isArmed()){
@@ -221,14 +222,16 @@ void on_state_alarm(){
 
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
-      
-      fsm.trigger(EVENT_DEACTIVATE);
+      digitalWrite(SIREN, LOW);
+
+      fsm.trigger(EVENT_QUIET);
       break;
     }
 
     if(currentMillis >= startTime + TIME_ALARMED){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
+      
       break;
     }
 
