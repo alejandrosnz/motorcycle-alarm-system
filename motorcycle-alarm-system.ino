@@ -109,19 +109,43 @@ void on_state_prearmed(){
 void on_state_armed(){
  log("State ARMED");
 
+  // ARMED_LED
+  int armedLedState = LOW;
+  unsigned long armedLedPreviousMillis = 0;
+  int armedLedOnTime = 100;
+  int armedLedOffTime = 1500;
+  unsigned long currentMillis;
+  unsigned long startTime = millis();
+
   while (true){
+    currentMillis = millis();
+    
     if (!isArmed()){
+      digitalWrite(ARMED_LED, LOW);
+
       fsm.trigger(EVENT_DEACTIVATE);
 
       break;
     }
 
+    if ((armedLedState == HIGH) && (currentMillis - armedLedPreviousMillis >= armedLedOnTime)){
+      armedLedState = LOW;
+      digitalWrite(ARMED_LED, LOW);
+      armedLedPreviousMillis = currentMillis;
+    }else if ((armedLedState == LOW) && (currentMillis - armedLedPreviousMillis >= armedLedOffTime)){
+      armedLedState = HIGH;
+      digitalWrite(ARMED_LED, HIGH);
+      armedLedPreviousMillis = currentMillis;
+    }
+
     // Read accelerometer
 
     // IF accelerometer read moves softly
+    digitalWrite(ARMED_LED, LOW);
     fsm.trigger(EVENT_ALERT);
 
     // IF accelerometer read moves hardly
+    digitalWrite(ARMED_LED, LOW);
     fsm.trigger(EVENT_ALARM);
   }
 }
@@ -231,7 +255,7 @@ void on_state_alarm(){
     if(currentMillis >= startTime + TIME_ALARMED){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
-      
+
       break;
     }
 
