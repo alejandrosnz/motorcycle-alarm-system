@@ -17,11 +17,11 @@ const long TIME_WARNED      = 2 * 1000;
 const long TIME_ALARMED     = 30 * 1000;
 
 // States
-State state_disabled(NULL, &on_state_disabled, NULL);
-State state_prearmed(NULL, &on_state_prearmed, NULL);
-State state_armed(NULL, &on_state_armed, NULL);
-State state_warn(NULL, &on_state_warn, NULL);
-State state_alarm(NULL, &on_state_alarm, NULL);
+State state_disabled(&on_state_disabled, NULL, NULL);
+State state_prearmed(&on_state_prearmed, NULL, NULL);
+State state_armed(&on_state_armed, NULL, NULL);
+State state_warn(&on_state_warn, NULL, NULL);
+State state_alarm(&on_state_alarm, NULL, NULL);
 
 // Events
 const int EVENT_ACTIVATE    = 0xf0;
