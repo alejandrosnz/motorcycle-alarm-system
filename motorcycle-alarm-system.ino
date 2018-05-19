@@ -168,17 +168,17 @@ void on_state_armed(){
     diffAcY = abs(initAcY - AcY);
     diffAcZ = abs(initAcZ - AcZ);
     
-    if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN) {
-      digitalWrite(ARMED_LED, LOW);
-
-      trigger(EVENT_ALERT);
-      break;
-    }
-    
     if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
       digitalWrite(ARMED_LED, LOW);
 
       trigger(EVENT_ALARM);
+      break;
+    }
+
+    if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN) {
+      digitalWrite(ARMED_LED, LOW);
+
+      trigger(EVENT_ALERT);
       break;
     }
   }
