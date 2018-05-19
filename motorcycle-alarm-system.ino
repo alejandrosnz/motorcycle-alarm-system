@@ -1,3 +1,5 @@
+#include <Wire.h>
+
 // I/O
 const int ARMED_SWITCH      = 2;
 const int ARMED_LED         = 4;
@@ -14,6 +16,8 @@ const long DELAY_POSTWARN   = 120 * 1000L;
 const long TIME_NOTIFY      = 600;
 const long TIME_WARNED      = 2 * 1000;
 const long TIME_ALARMED     = 30 * 1000;
+const long THRESHOLD_WARN   = 750;
+const long THRESHOLD_ALARM  = 1250;
 
 int currentState;
 
@@ -30,7 +34,9 @@ const int EVENT_DEACTIVATE  = 0xe1;
 const int EVENT_ARM         = 0xe2; 
 const int EVENT_ALERT       = 0xe3; 
 const int EVENT_ALARM       = 0xe4; 
-const int EVENT_QUIET       = 0xe5; 
+const int EVENT_QUIET       = 0xe5;
+
+int16_t AcX, AcY, AcZ, initAcX, initAcY, initAcZ, diffAcX, diffAcY, diffAcZ;
 
 // State DISABLED
 void on_state_disabled(){
@@ -305,12 +311,19 @@ void on_state_alarm(){
 void setup() {
   Serial.begin(SERIAL_PORT);
 
-  // I/O
+  // Setup I/O
   pinMode(ARMED_SWITCH, INPUT);
   pinMode(ARMED_LED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
   pinMode(SIREN, OUTPUT);
   pinMode(BLINKERS, OUTPUT);
+
+  // Setup Accelerometer
+  Wire.begin();
+  Wire.beginTransmission(ACCELEROMETER_I2C);
+  Wire.write(0x6B);  // PWR_MGMT_1 register
+  Wire.write(0);     // set to zero (wakes up the MPU-6050)
+  Wire.endTransmission(true);
 
   // Set up initial state
   currentState = STATE_DISABLED;
@@ -390,4 +403,15 @@ void log(String msg){
 
 bool isArmed(){
   return digitalRead(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
+}
+
+void readAccelerometer(){
+  Wire.beginTransmission(ACCELEROMETER_I2C);
+  Wire.write(0x3B);                     // starting with register 0x3B (ACCEL_XOUT_H)
+  Wire.endTransmission(false);
+
+  Wire.requestFrom(ACCELEROMETER_I2C, 14, true);  // request a total of 14 registers
+  AcX=Wire.read()<<8|Wire.read();       // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)    
+  AcY=Wire.read()<<8|Wire.read();       // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AcZ=Wire.read()<<8|Wire.read();       // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
 }
