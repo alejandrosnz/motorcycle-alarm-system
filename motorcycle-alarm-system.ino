@@ -7,7 +7,7 @@ const int BUZZER            = 3;
 const int SIREN             = 8;
 const int BLINKERS          = 12;
 const int ACCELEROMETER_I2C = 0x68;
-const int SERIAL_PORT       = 9600;
+const int SERIAL_BAUD_RATE  = 9600;
 
 // Configuration
 const bool REV_ARMED_SWITCH = true;
@@ -36,7 +36,9 @@ const int EVENT_ALERT       = 0xe3;
 const int EVENT_ALARM       = 0xe4; 
 const int EVENT_QUIET       = 0xe5;
 
-int16_t AcX, AcY, AcZ, initAcX, initAcY, initAcZ, diffAcX, diffAcY, diffAcZ;
+int16_t AcX, initAcX, diffAcX,
+        AcY, initAcY, diffAcY,
+        AcZ, initAcZ, diffAcZ;
 
 // State DISABLED
 void on_state_disabled(){
@@ -349,7 +351,7 @@ void on_state_alarm(){
 }
 
 void setup() {
-  Serial.begin(SERIAL_PORT);
+  Serial.begin(SERIAL_BAUD_RATE);
 
   // Setup I/O
   pinMode(ARMED_SWITCH, INPUT);
