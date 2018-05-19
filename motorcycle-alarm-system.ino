@@ -1,5 +1,3 @@
-#include "Fsm.h"
-
 // I/O
 const int ARMED_SWITCH      = 2;
 const int ARMED_LED         = 4;
@@ -7,6 +5,7 @@ const int BUZZER            = 3;
 const int SIREN             = 8;
 const int BLINKERS          = 12;
 const int ACCELEROMETER_I2C = 0x68;
+const int SERIAL_PORT       = 9600;
 
 // Configuration
 const bool REV_ARMED_SWITCH = true;
@@ -16,33 +15,34 @@ const long TIME_NOTIFY      = 600;
 const long TIME_WARNED      = 2 * 1000;
 const long TIME_ALARMED     = 30 * 1000;
 
-// States
-State state_disabled(&on_state_disabled, NULL, NULL);
-State state_prearmed(&on_state_prearmed, NULL, NULL);
-State state_armed(&on_state_armed, NULL, NULL);
-State state_warn(&on_state_warn, NULL, NULL);
-State state_alarm(&on_state_alarm, NULL, NULL);
+int currentState;
 
-// Events
-const int EVENT_ACTIVATE    = 0xf0;
-const int EVENT_DEACTIVATE  = 0xf1;
-const int EVENT_ARM         = 0xf2;
-const int EVENT_ALERT       = 0xf3;
-const int EVENT_ALARM       = 0xf4;
-const int EVENT_QUIET       = 0xf5;
+// STATES
+const int STATE_DISABLED    = 0xf0;
+const int STATE_PREARMED    = 0xf1;
+const int STATE_ARMED       = 0xf2;
+const int STATE_WARN        = 0xf3;
+const int STATE_ALARM       = 0xf4;
 
-// Setup initial state
-Fsm fsm(&state_disabled);
-
+// Events 
+const int EVENT_ACTIVATE    = 0xe0; 
+const int EVENT_DEACTIVATE  = 0xe1; 
+const int EVENT_ARM         = 0xe2; 
+const int EVENT_ALERT       = 0xe3; 
+const int EVENT_ALARM       = 0xe4; 
+const int EVENT_QUIET       = 0xe5; 
 
 // State DISABLED
 void on_state_disabled(){
   log("State DISABLED");
   
   while(true){
-    
+
+    if (currentState != STATE_DISABLED)
+      break;
+
     if(isArmed()){
-      fsm.trigger(EVENT_ACTIVATE);
+      trigger(EVENT_ACTIVATE);
       
       break;
     }
@@ -64,19 +64,19 @@ void on_state_prearmed(){
   while(true){
     currentMillis = millis();
     
+    if (currentState != STATE_PREARMED)
+      break;
+
     if (!isArmed()){
-      log("on PRE-ARMED -> deactivate");
-      
       digitalWrite(BLINKERS, LOW);
       
-      fsm.trigger(EVENT_DEACTIVATE);
+      trigger(EVENT_DEACTIVATE);
       break;
     }
 
     if(currentMillis >= startTime + TIME_NOTIFY){
-      log("on PRE-ARMED -> end notify");
-
       digitalWrite(BLINKERS, LOW);
+      
       break;
     }
 
@@ -96,22 +96,20 @@ void on_state_prearmed(){
   while(true){
     currentMillis = millis();
 
+    if(currentState != STATE_PREARMED)
+      break;
+
     if (!isArmed()){
-      log("on PRE-ARMED -> deactivate");
-      
-      fsm.trigger(EVENT_DEACTIVATE);
+      trigger(EVENT_DEACTIVATE);
       break;
     }
 
     if(currentMillis >= startTime + DELAY_PREARMED){
-      log("on PRE-ARMED -> end delay prearmed");
-      
       break;
     }
   }
 
-  log("on PRE-ARMED -> end pre-armed");
-  fsm.trigger(EVENT_ARM);
+  trigger(EVENT_ARM);
 }
 
 // State ARMED
@@ -129,10 +127,13 @@ void on_state_armed(){
   while (true){
     currentMillis = millis();
 
+    if (currentState != STATE_ARMED)
+      break;
+
     if (!isArmed()){
       digitalWrite(ARMED_LED, LOW);
 
-      fsm.trigger(EVENT_DEACTIVATE);
+      trigger(EVENT_DEACTIVATE);
 
       break;
     }
@@ -151,11 +152,11 @@ void on_state_armed(){
 
     // IF accelerometer read moves softly
     digitalWrite(ARMED_LED, LOW);
-    fsm.trigger(EVENT_ALERT);
+    trigger(EVENT_ALERT);
 
     // IF accelerometer read moves hardly
     digitalWrite(ARMED_LED, LOW);
-    fsm.trigger(EVENT_ALARM);
+    trigger(EVENT_ALARM);
   }
 }
 
@@ -178,10 +179,13 @@ void on_state_warn(){
   while(true){
     currentMillis = millis();
 
+    if (currentState != STATE_WARN)
+      break;
+
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
       
-      fsm.trigger(EVENT_QUIET);
+      trigger(EVENT_QUIET);
       break;
     }
 
@@ -216,9 +220,12 @@ void on_state_warn(){
 
   while(true){
     currentMillis = millis();
-
+    
+    if (currentState != STATE_WARN)
+      break;
+    
     if (!isArmed()){
-      fsm.trigger(EVENT_QUIET);
+      trigger(EVENT_QUIET);
       break;
     }
 
@@ -228,10 +235,10 @@ void on_state_warn(){
 
     // Read accelerometer
     // IF accelerometer read moves
-    fsm.trigger(EVENT_ALARM);
+    trigger(EVENT_ALARM);
   }
 
-  fsm.trigger(EVENT_QUIET);
+  trigger(EVENT_QUIET);
 }
 
 // State ALARM
@@ -253,11 +260,14 @@ void on_state_alarm(){
   while(true){
     currentMillis = millis();
 
+    if (currentState != STATE_ALARM)
+      break;
+
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
 
-      fsm.trigger(EVENT_QUIET);
+      trigger(EVENT_QUIET);
       break;
     }
 
@@ -289,11 +299,11 @@ void on_state_alarm(){
     }
   }
 
-  fsm.trigger(EVENT_QUIET);
+  trigger(EVENT_QUIET);
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(SERIAL_PORT);
 
   // I/O
   pinMode(ARMED_SWITCH, INPUT);
@@ -302,39 +312,76 @@ void setup() {
   pinMode(SIREN, OUTPUT);
   pinMode(BLINKERS, OUTPUT);
 
-  // Transations
-  // Activate Alarm
-  fsm.add_transition(&state_disabled, &state_prearmed,
-                     EVENT_ACTIVATE, NULL);
-  // Arm Alarm
-  fsm.add_transition(&state_prearmed, &state_armed, 
-                     EVENT_ARM, NULL);
-  // Deactivate Alarm
-  fsm.add_transition(&state_prearmed, &state_disabled,
-                     EVENT_DEACTIVATE, NULL);
-  fsm.add_transition(&state_armed, &state_disabled,
-                     EVENT_DEACTIVATE, NULL);
-  // Alert
-  fsm.add_transition(&state_armed, &state_warn,
-                     EVENT_ALERT, NULL);
-  // Alarm
-  fsm.add_transition(&state_armed, &state_alarm,
-                     EVENT_ALARM, NULL);
-  fsm.add_transition(&state_warn, &state_alarm,
-                     EVENT_ALARM, NULL);
-  // Quiet
-  fsm.add_transition(&state_warn, &state_armed,
-                     EVENT_QUIET, NULL);
-  fsm.add_transition(&state_alarm, &state_armed,
-                     EVENT_QUIET, NULL);
-
-  // Start state machine
-  fsm.run_machine();
+  // Set up initial state
+  currentState = STATE_DISABLED;
+  on_state_disabled();
 }
 
 void loop() { 
   // Empty
+  
+}
 
+void trigger(int event){
+  
+  switch (event){
+    case EVENT_ACTIVATE:
+      log("EVENT_ACTIVATE");
+      if(currentState == STATE_DISABLED){
+        currentState = STATE_PREARMED;
+        on_state_prearmed();
+      }   
+      break;
+
+    case EVENT_ARM:
+      log("EVENT_ARM");
+      if (currentState == STATE_PREARMED){
+        currentState = STATE_ARMED;
+        on_state_armed();
+      }
+      break;
+
+    case EVENT_DEACTIVATE:
+      log("EVENT_DEACTIVATE");
+      if (currentState == STATE_PREARMED ||
+          currentState == STATE_ARMED){
+        currentState = STATE_DISABLED;
+        on_state_disabled();
+      }
+      break;
+
+    case EVENT_ALERT:
+      log("EVENT_ALERT");
+      if (currentState == STATE_ARMED){
+        currentState = STATE_WARN;
+        on_state_warn();
+      }
+      break;
+
+    case EVENT_ALARM:
+      log("EVENT_ALARM");
+      if (currentState == STATE_ARMED ||
+          currentState == STATE_WARN){
+        currentState = STATE_ALARM;
+        on_state_alarm();
+      }
+      break;
+
+    case EVENT_QUIET:
+      log("EVENT_QUIET");
+      if (currentState == STATE_WARN ||
+          currentState == STATE_ALARM){
+        currentState = STATE_ARMED;
+        on_state_armed();
+      }
+      break;
+  
+
+    default:
+      log("Exception! Wrong event called!");
+      currentState = STATE_DISABLED;
+      break;
+  }
 }
 
 void log(String msg){
