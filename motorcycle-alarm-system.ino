@@ -122,6 +122,12 @@ void on_state_prearmed(){
 void on_state_armed(){
  log("State ARMED");
 
+  // Read initial accelerometer values
+  readAccelerometer();
+  initAcX = AcX;
+  initAcY = AcY;
+  initAcZ = AcZ;
+
   // ARMED_LED
   int armedLedState = LOW;
   unsigned long armedLedPreviousMillis = 0;
@@ -154,21 +160,37 @@ void on_state_armed(){
       armedLedPreviousMillis = currentMillis;
     }
 
-    // Read accelerometer
+    // IF accelerometer read movement trigger alert/alarm event
+    readAccelerometer();
+    diffAcX = abs(initAcX - AcX);
+    diffAcY = abs(initAcY - AcY);
+    diffAcZ = abs(initAcZ - AcZ);
+    
+    if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN) {
+      digitalWrite(ARMED_LED, LOW);
 
-    // IF accelerometer read moves softly
-    digitalWrite(ARMED_LED, LOW);
-    trigger(EVENT_ALERT);
+      trigger(EVENT_ALERT);
+      break;
+    }
+    
+    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
+      digitalWrite(ARMED_LED, LOW);
 
-    // IF accelerometer read moves hardly
-    digitalWrite(ARMED_LED, LOW);
-    trigger(EVENT_ALARM);
+      trigger(EVENT_ALARM);
+      break;
+    }
   }
 }
 
 // State WARN
 void on_state_warn(){
   log("State WARN");
+
+  // Read initial accelerometer values
+  readAccelerometer();
+  initAcX = AcX;
+  initAcY = AcY;
+  initAcZ = AcZ;
 
   // BLINKERS & SHORT SIREN
   int blinkersState = LOW;
@@ -220,6 +242,17 @@ void on_state_warn(){
       digitalWrite(SIREN, HIGH);
       sirenPreviousMillis = currentMillis;
     }
+
+    // IF accelerometer read movement trigger alarm event
+    readAccelerometer();
+    diffAcX = abs(initAcX - AcX);
+    diffAcY = abs(initAcY - AcY);
+    diffAcZ = abs(initAcZ - AcZ);
+    
+    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
+      trigger(EVENT_ALARM);
+      break;
+    }
   }
 
   startTime = millis();
@@ -239,9 +272,16 @@ void on_state_warn(){
       break;
     }
 
-    // Read accelerometer
-    // IF accelerometer read moves
-    trigger(EVENT_ALARM);
+    // IF accelerometer read movement trigger alarm event
+    readAccelerometer();
+    diffAcX = abs(initAcX - AcX);
+    diffAcY = abs(initAcY - AcY);
+    diffAcZ = abs(initAcZ - AcZ);
+    
+    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
+      trigger(EVENT_ALARM);
+      break;
+    }
   }
 
   trigger(EVENT_QUIET);
