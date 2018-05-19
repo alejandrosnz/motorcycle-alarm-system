@@ -16,8 +16,9 @@ const long DELAY_POSTWARN   = 120 * 1000L;
 const long TIME_NOTIFY      = 600;
 const long TIME_WARNED      = 2 * 1000;
 const long TIME_ALARMED     = 30 * 1000;
-const long THRESHOLD_WARN   = 750;
-const long THRESHOLD_ALARM  = 1250;
+const long THRESHOLD_WARN   = 2500;
+const long THRESHOLD_ALARM  = 3500;
+const long DELAY_ACCEL_READ = 100;
 
 int currentState;
 
@@ -135,6 +136,7 @@ void on_state_armed(){
   unsigned long armedLedPreviousMillis = 0;
   int armedLedOnTime = 100;
   int armedLedOffTime = 1500;
+  unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
@@ -162,24 +164,29 @@ void on_state_armed(){
       armedLedPreviousMillis = currentMillis;
     }
 
-    // IF accelerometer read movement trigger alert/alarm event
-    readAccelerometer();
-    diffAcX = abs(initAcX - AcX);
-    diffAcY = abs(initAcY - AcY);
-    diffAcZ = abs(initAcZ - AcZ);
-    
-    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
-      digitalWrite(ARMED_LED, LOW);
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if(currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alert/alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+      
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        digitalWrite(ARMED_LED, LOW);
 
-      trigger(EVENT_ALARM);
-      break;
-    }
+        trigger(EVENT_ALARM);
+        break;
+      }
 
-    if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN) {
-      digitalWrite(ARMED_LED, LOW);
+      if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN){
+        digitalWrite(ARMED_LED, LOW);
 
-      trigger(EVENT_ALERT);
-      break;
+        trigger(EVENT_ALERT);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
     }
   }
 }
@@ -203,6 +210,7 @@ void on_state_warn(){
   unsigned long sirenPreviousMillis = 0;
   int sirenOnTime = 500;
   int sirenOffTime = 300;
+  unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
@@ -245,15 +253,20 @@ void on_state_warn(){
       sirenPreviousMillis = currentMillis;
     }
 
-    // IF accelerometer read movement trigger alarm event
-    readAccelerometer();
-    diffAcX = abs(initAcX - AcX);
-    diffAcY = abs(initAcY - AcY);
-    diffAcZ = abs(initAcZ - AcZ);
-    
-    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
-      trigger(EVENT_ALARM);
-      break;
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if (currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        trigger(EVENT_ALARM);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
     }
   }
 
@@ -274,15 +287,20 @@ void on_state_warn(){
       break;
     }
 
-    // IF accelerometer read movement trigger alarm event
-    readAccelerometer();
-    diffAcX = abs(initAcX - AcX);
-    diffAcY = abs(initAcY - AcY);
-    diffAcZ = abs(initAcZ - AcZ);
-    
-    if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM) {
-      trigger(EVENT_ALARM);
-      break;
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if (currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+      
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        trigger(EVENT_ALARM);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
     }
   }
 
