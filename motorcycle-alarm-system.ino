@@ -1,3 +1,5 @@
+#include <Wire.h>
+
 // I/O
 const int ARMED_SWITCH      = 2;
 const int ARMED_LED         = 4;
@@ -5,7 +7,7 @@ const int BUZZER            = 3;
 const int SIREN             = 8;
 const int BLINKERS          = 12;
 const int ACCELEROMETER_I2C = 0x68;
-const int SERIAL_PORT       = 9600;
+const int SERIAL_BAUD_RATE  = 9600;
 
 // Configuration
 const bool REV_ARMED_SWITCH = true;
@@ -14,6 +16,9 @@ const long DELAY_POSTWARN   = 120 * 1000L;
 const long TIME_NOTIFY      = 600;
 const long TIME_WARNED      = 2 * 1000;
 const long TIME_ALARMED     = 30 * 1000;
+const long THRESHOLD_WARN   = 2500;
+const long THRESHOLD_ALARM  = 3500;
+const long DELAY_ACCEL_READ = 100;
 
 int currentState;
 
@@ -30,7 +35,11 @@ const int EVENT_DEACTIVATE  = 0xe1;
 const int EVENT_ARM         = 0xe2; 
 const int EVENT_ALERT       = 0xe3; 
 const int EVENT_ALARM       = 0xe4; 
-const int EVENT_QUIET       = 0xe5; 
+const int EVENT_QUIET       = 0xe5;
+
+int16_t AcX, initAcX, diffAcX,
+        AcY, initAcY, diffAcY,
+        AcZ, initAcZ, diffAcZ;
 
 // State DISABLED
 void on_state_disabled(){
@@ -116,11 +125,18 @@ void on_state_prearmed(){
 void on_state_armed(){
  log("State ARMED");
 
+  // Read initial accelerometer values
+  readAccelerometer();
+  initAcX = AcX;
+  initAcY = AcY;
+  initAcZ = AcZ;
+
   // ARMED_LED
   int armedLedState = LOW;
   unsigned long armedLedPreviousMillis = 0;
   int armedLedOnTime = 100;
   int armedLedOffTime = 1500;
+  unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
@@ -148,21 +164,42 @@ void on_state_armed(){
       armedLedPreviousMillis = currentMillis;
     }
 
-    // Read accelerometer
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if(currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alert/alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+      
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        digitalWrite(ARMED_LED, LOW);
 
-    // IF accelerometer read moves softly
-    digitalWrite(ARMED_LED, LOW);
-    trigger(EVENT_ALERT);
+        trigger(EVENT_ALARM);
+        break;
+      }
 
-    // IF accelerometer read moves hardly
-    digitalWrite(ARMED_LED, LOW);
-    trigger(EVENT_ALARM);
+      if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN){
+        digitalWrite(ARMED_LED, LOW);
+
+        trigger(EVENT_ALERT);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
+    }
   }
 }
 
 // State WARN
 void on_state_warn(){
   log("State WARN");
+
+  // Read initial accelerometer values
+  readAccelerometer();
+  initAcX = AcX;
+  initAcY = AcY;
+  initAcZ = AcZ;
 
   // BLINKERS & SHORT SIREN
   int blinkersState = LOW;
@@ -173,6 +210,7 @@ void on_state_warn(){
   unsigned long sirenPreviousMillis = 0;
   int sirenOnTime = 500;
   int sirenOffTime = 300;
+  unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
@@ -214,6 +252,22 @@ void on_state_warn(){
       digitalWrite(SIREN, HIGH);
       sirenPreviousMillis = currentMillis;
     }
+
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if (currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        trigger(EVENT_ALARM);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
+    }
   }
 
   startTime = millis();
@@ -233,9 +287,21 @@ void on_state_warn(){
       break;
     }
 
-    // Read accelerometer
-    // IF accelerometer read moves
-    trigger(EVENT_ALARM);
+    // Read accelerometer each DELAY_ACCEL_READ millis
+    if (currentMillis >= accelerometerPreviousMillis + DELAY_ACCEL_READ){
+      // IF accelerometer read movement trigger alarm event
+      readAccelerometer();
+      diffAcX = abs(initAcX - AcX);
+      diffAcY = abs(initAcY - AcY);
+      diffAcZ = abs(initAcZ - AcZ);
+      
+      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+        trigger(EVENT_ALARM);
+        break;
+      }
+
+      accelerometerPreviousMillis = currentMillis;
+    }
   }
 
   trigger(EVENT_QUIET);
@@ -303,14 +369,21 @@ void on_state_alarm(){
 }
 
 void setup() {
-  Serial.begin(SERIAL_PORT);
+  Serial.begin(SERIAL_BAUD_RATE);
 
-  // I/O
+  // Setup I/O
   pinMode(ARMED_SWITCH, INPUT);
   pinMode(ARMED_LED, OUTPUT);
   pinMode(BUZZER, OUTPUT);
   pinMode(SIREN, OUTPUT);
   pinMode(BLINKERS, OUTPUT);
+
+  // Setup Accelerometer
+  Wire.begin();
+  Wire.beginTransmission(ACCELEROMETER_I2C);
+  Wire.write(0x6B);  // PWR_MGMT_1 register
+  Wire.write(0);     // set to zero (wakes up the MPU-6050)
+  Wire.endTransmission(true);
 
   // Set up initial state
   currentState = STATE_DISABLED;
@@ -390,4 +463,15 @@ void log(String msg){
 
 bool isArmed(){
   return digitalRead(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
+}
+
+void readAccelerometer(){
+  Wire.beginTransmission(ACCELEROMETER_I2C);
+  Wire.write(0x3B);                     // starting with register 0x3B (ACCEL_XOUT_H)
+  Wire.endTransmission(false);
+
+  Wire.requestFrom(ACCELEROMETER_I2C, 14, true);  // request a total of 14 registers
+  AcX=Wire.read()<<8|Wire.read();       // 0x3B (ACCEL_XOUT_H) & 0x3C (ACCEL_XOUT_L)    
+  AcY=Wire.read()<<8|Wire.read();       // 0x3D (ACCEL_YOUT_H) & 0x3E (ACCEL_YOUT_L)
+  AcZ=Wire.read()<<8|Wire.read();       // 0x3F (ACCEL_ZOUT_H) & 0x40 (ACCEL_ZOUT_L)
 }
