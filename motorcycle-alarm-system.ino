@@ -405,8 +405,8 @@ void loop() {
   
 }
 
-void trigger(int event){
-  
+// Trigger state machine events
+void trigger(int event){  
   switch (event){
     case EVENT_ACTIVATE:
       log("EVENT_ACTIVATE");
@@ -467,14 +467,17 @@ void trigger(int event){
   }
 }
 
+// Write message to serial port
 void log(String msg){
   Serial.println(msg);
 }
 
+// Return if the alarm is armed or not
 bool isArmed(){
   return digitalRead(ARMED_SWITCH) ^ REV_ARMED_SWITCH;
 }
 
+// Read accelerometer values and store in AcX, AcY and AcZ
 void readAccelerometer(){
   Wire.beginTransmission(ACCELEROMETER_I2C);
   Wire.write(0x3B);                     // starting with register 0x3B (ACCEL_XOUT_H)
