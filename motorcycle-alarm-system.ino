@@ -1,25 +1,25 @@
 #include <Wire.h>
 
 // I/O
-const int ARMED_SWITCH      = 2;
-const int ARMED_LED         = 4;
-const int BUZZER            = 3;
-const int SIREN             = 8;
-const int BLINKERS          = 12;
-const int ACCELEROMETER_I2C = 0x68;
-const int SERIAL_BAUD_RATE  = 9600;
+const int ARMED_SWITCH      = 2;          // Pin for switch to arm alarm
+const int ARMED_LED         = 4;          // Pin for notify that alarm is armed
+const int BUZZER            = 3;          // Pin for buzzer/piezo speaker
+const int SIREN             = 8;          // Pin for siren/claxon
+const int BLINKERS          = 12;         // Pin for blinkers
+const int ACCELEROMETER_I2C = 0x68;       // I2C address for accelerometer
+const int SERIAL_BAUD_RATE  = 9600;       // Serial baud rate for debug
 
 // Configuration
-const bool REV_ARMED_SWITCH = true;
-const long DELAY_PREARMED   = 5 * 1000;
-const long DELAY_POSTWARN   = 120 * 1000L;
-const long TIME_NOTIFY      = 600;
-const long TIME_WARNED      = 2 * 1000;
-const long TIME_ALARMED     = 30 * 1000;
-const long THRESHOLD_WARN   = 2500;
-const long THRESHOLD_ALARM  = 3500;
-const long DELAY_ACCEL_READ = 100;
-const long BUZZER_TONE      = 1000;       // 1 KHz
+const bool REV_ARMED_SWITCH = true;       // If set to true arm alarm on low
+const long DELAY_PREARMED   = 5 * 1000;   // Time delay to arm alarm
+const long DELAY_POSTWARN   = 120 * 1000L;// Time delay to calm down from warning
+const long TIME_NOTIFY = 600;             // Time to mantain armed notification
+const long TIME_WARNED = 2 * 1000;        // Time to mantain warning sound
+const long TIME_ALARMED     = 30 * 1000;  // Time to mantain alarm sound
+const long THRESHOLD_WARN = 2500;         // Force threshold to warn
+const long THRESHOLD_ALARM  = 3500;       // Force threshold to alarm
+const long DELAY_ACCEL_READ = 100;        // Read accelerometer every x millis
+const long BUZZER_TONE      = 1000;       // Play buzzer at 1 KHz
 
 int currentState;
 
