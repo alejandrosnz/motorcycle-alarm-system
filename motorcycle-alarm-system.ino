@@ -19,6 +19,7 @@ const long TIME_ALARMED     = 30 * 1000;
 const long THRESHOLD_WARN   = 2500;
 const long THRESHOLD_ALARM  = 3500;
 const long DELAY_ACCEL_READ = 100;
+const long BUZZER_TONE      = 1000;       // 1 KHz
 
 int currentState;
 
@@ -222,7 +223,9 @@ void on_state_warn(){
 
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
-      
+      digitalWrite(SIREN, LOW);
+      noTone(BUZZER);
+
       trigger(EVENT_QUIET);
       break;
     }
@@ -230,6 +233,7 @@ void on_state_warn(){
     if(currentMillis >= startTime + TIME_WARNED){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
+      noTone(BUZZER);
       break;
     }
 
@@ -246,10 +250,12 @@ void on_state_warn(){
     if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
       sirenState = LOW;
       digitalWrite(SIREN, LOW);
+      noTone(BUZZER);
       sirenPreviousMillis = currentMillis;
     }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
       sirenState = HIGH;
       digitalWrite(SIREN, HIGH);
+      tone(BUZZER, BUZZER_TONE);
       sirenPreviousMillis = currentMillis;
     }
 
@@ -332,6 +338,7 @@ void on_state_alarm(){
     if (!isArmed()){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
+      noTone(BUZZER);
 
       trigger(EVENT_QUIET);
       break;
@@ -340,7 +347,8 @@ void on_state_alarm(){
     if(currentMillis >= startTime + TIME_ALARMED){
       digitalWrite(BLINKERS, LOW);
       digitalWrite(SIREN, LOW);
-
+      noTone(BUZZER);
+      
       break;
     }
 
@@ -357,10 +365,12 @@ void on_state_alarm(){
     if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
       sirenState = LOW;
       digitalWrite(SIREN, LOW);
+      noTone(BUZZER);
       sirenPreviousMillis = currentMillis;
     }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
       sirenState = HIGH;
       digitalWrite(SIREN, HIGH);
+      tone(BUZZER, BUZZER_TONE);
       sirenPreviousMillis = currentMillis;
     }
   }
