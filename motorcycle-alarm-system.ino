@@ -66,8 +66,8 @@ void on_state_prearmed(){
   // BLINKERS
   int blinkersState = LOW;
   unsigned long blinkersPreviousMillis = 0;
-  int blinkersOnTime = 100;
-  int blinkersOffTime = 100;
+  const int blinkersOnTime = 100;
+  const int blinkersOffTime = 100;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
@@ -135,8 +135,8 @@ void on_state_armed(){
   // ARMED_LED
   int armedLedState = LOW;
   unsigned long armedLedPreviousMillis = 0;
-  int armedLedOnTime = 100;
-  int armedLedOffTime = 1500;
+  const int armedLedOnTime = 100;
+  const int armedLedOffTime = 1500;
   unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
@@ -205,12 +205,12 @@ void on_state_warn(){
   // BLINKERS & SHORT SIREN
   int blinkersState = LOW;
   unsigned long blinkersPreviousMillis = 0;
-  int blinkersOnTime = 200;
-  int blinkersOffTime = 200;
+  const int blinkersOnTime = 200;
+  const int blinkersOffTime = 200;
   int sirenState = LOW;
   unsigned long sirenPreviousMillis = 0;
-  int sirenOnTime = 500;
-  int sirenOffTime = 300;
+  const int sirenOnTime = 500;
+  const int sirenOffTime = 300;
   unsigned long accelerometerPreviousMillis = 0;
   unsigned long currentMillis;
   unsigned long startTime = millis();
@@ -326,12 +326,12 @@ void on_state_alarm(){
   // BLINKERS & LONG SIREN
   int blinkersState = LOW;
   unsigned long blinkersPreviousMillis = 0;
-  int blinkersOnTime = 200;
-  int blinkersOffTime = 200;
+  const int blinkersOnTime = 200;
+  const int blinkersOffTime = 200;
   int sirenState = LOW;
   unsigned long sirenPreviousMillis = 0;
-  int sirenOnTime = 500;
-  int sirenOffTime = 300;
+  const int sirenOnTime = 500;
+  const int sirenOffTime = 300;
   unsigned long currentMillis;
   unsigned long startTime = millis();
 
