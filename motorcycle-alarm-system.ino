@@ -13,10 +13,10 @@ const int SERIAL_BAUD_RATE  = 9600;       // Serial baud rate for debug
 const bool REV_ARMED_SWITCH = true;       // If set to true arm alarm on low
 const long DELAY_PREARMED   = 5 * 1000;   // Time delay to arm alarm
 const long DELAY_POSTWARN   = 120 * 1000L;// Time delay to calm down from warning
-const long TIME_NOTIFY = 600;             // Time to mantain armed notification
-const long TIME_WARNED = 2 * 1000;        // Time to mantain warning sound
+const long TIME_NOTIFY      = 600;        // Time to mantain armed notification
+const long TIME_WARNED      = 2 * 1000;   // Time to mantain warning sound
 const long TIME_ALARMED     = 30 * 1000;  // Time to mantain alarm sound
-const long THRESHOLD_WARN = 2500;         // Force threshold to warn
+const long THRESHOLD_WARN   = 2500;       // Force threshold to warn
 const long THRESHOLD_ALARM  = 3500;       // Force threshold to alarm
 const long DELAY_ACCEL_READ = 100;        // Read accelerometer every x millis
 const long BUZZER_TONE      = 1000;       // Play buzzer at 1 KHz
@@ -276,6 +276,12 @@ void on_state_warn(){
     }
   }
 
+  // Read initial accelerometer values
+  readAccelerometer();
+  initAcX = AcX;
+  initAcY = AcY;
+  initAcZ = AcZ;
+  
   startTime = millis();
 
   while(true){
@@ -301,7 +307,7 @@ void on_state_warn(){
       diffAcY = abs(initAcY - AcY);
       diffAcZ = abs(initAcZ - AcZ);
       
-      if (diffAcX > THRESHOLD_ALARM || diffAcY > THRESHOLD_ALARM || diffAcZ > THRESHOLD_ALARM){
+      if (diffAcX > THRESHOLD_WARN || diffAcY > THRESHOLD_WARN || diffAcZ > THRESHOLD_WARN){
         trigger(EVENT_ALARM);
         break;
       }
