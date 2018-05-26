@@ -90,11 +90,11 @@ void on_state_prearmed(){
       break;
     }
 
-    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+    if ((blinkersState == HIGH) && (currentMillis >= blinkersPreviousMillis + blinkersOnTime)){
       blinkersState = LOW;
       digitalWrite(BLINKERS, LOW);
       blinkersPreviousMillis = currentMillis;
-    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+    }else if ((blinkersState == LOW) && (currentMillis >= blinkersPreviousMillis + blinkersOffTime)){
       blinkersState = HIGH;
       digitalWrite(BLINKERS, HIGH);
       blinkersPreviousMillis = currentMillis;
@@ -155,11 +155,11 @@ void on_state_armed(){
       break;
     }
 
-    if ((armedLedState == HIGH) && (currentMillis - armedLedPreviousMillis >= armedLedOnTime)){
+    if ((armedLedState == HIGH) && (currentMillis >= armedLedPreviousMillis + armedLedOnTime)){
       armedLedState = LOW;
       digitalWrite(ARMED_LED, LOW);
       armedLedPreviousMillis = currentMillis;
-    }else if ((armedLedState == LOW) && (currentMillis - armedLedPreviousMillis >= armedLedOffTime)){
+    }else if ((armedLedState == LOW) && (currentMillis >= armedLedPreviousMillis + armedLedOffTime)){
       armedLedState = HIGH;
       digitalWrite(ARMED_LED, HIGH);
       armedLedPreviousMillis = currentMillis;
@@ -237,22 +237,22 @@ void on_state_warn(){
       break;
     }
 
-    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+    if ((blinkersState == HIGH) && (currentMillis >= blinkersPreviousMillis + blinkersOnTime)){
       blinkersState = LOW;
       digitalWrite(BLINKERS, LOW);
       blinkersPreviousMillis = currentMillis;
-    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+    }else if ((blinkersState == LOW) && (currentMillis >= blinkersPreviousMillis + blinkersOffTime)){
       blinkersState = HIGH;
       digitalWrite(BLINKERS, HIGH);
       blinkersPreviousMillis = currentMillis;
     }
 
-    if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
+    if ((sirenState == HIGH) && (currentMillis >= sirenPreviousMillis + sirenOnTime)){
       sirenState = LOW;
       digitalWrite(SIREN, LOW);
       noTone(BUZZER);
       sirenPreviousMillis = currentMillis;
-    }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
+    }else if ((sirenState == LOW) && (currentMillis >= sirenPreviousMillis + sirenOffTime)){
       sirenState = HIGH;
       digitalWrite(SIREN, HIGH);
       tone(BUZZER, BUZZER_TONE);
@@ -358,22 +358,22 @@ void on_state_alarm(){
       break;
     }
 
-    if ((blinkersState == HIGH) && (currentMillis - blinkersPreviousMillis >= blinkersOnTime)){
+    if ((blinkersState == HIGH) && (currentMillis >= blinkersPreviousMillis + blinkersOnTime)){
       blinkersState = LOW;
       digitalWrite(BLINKERS, LOW);
       blinkersPreviousMillis = currentMillis;
-    }else if ((blinkersState == LOW) && (currentMillis - blinkersPreviousMillis >= blinkersOffTime)){
+    }else if ((blinkersState == LOW) && (currentMillis >= blinkersPreviousMillis + blinkersOffTime)){
       blinkersState = HIGH;
       digitalWrite(BLINKERS, HIGH);
       blinkersPreviousMillis = currentMillis;
     }
 
-    if ((sirenState == HIGH) && (currentMillis - sirenPreviousMillis >= sirenOnTime)){
+    if ((sirenState == HIGH) && (currentMillis >= sirenPreviousMillis + sirenOnTime)){
       sirenState = LOW;
       digitalWrite(SIREN, LOW);
       noTone(BUZZER);
       sirenPreviousMillis = currentMillis;
-    }else if ((sirenState == LOW) && (currentMillis - sirenPreviousMillis >= sirenOffTime)){
+    }else if ((sirenState == LOW) && (currentMillis >= sirenPreviousMillis + sirenOffTime)){
       sirenState = HIGH;
       digitalWrite(SIREN, HIGH);
       tone(BUZZER, BUZZER_TONE);
